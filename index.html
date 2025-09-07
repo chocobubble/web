@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Education App Prototype</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .phone { width: 375px; height: 812px; margin: 20px auto; background: #000; border-radius: 40px; padding: 8px; position: relative; }
+        .screen { width: 100%; height: 100%; background: #fff; border-radius: 32px; overflow: hidden; position: relative; }
+        .status-bar { height: 44px; background: linear-gradient(135deg, #4A90E2, #357ABD); color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 14px; font-weight: 600; }
+        .content { height: calc(100% - 44px); overflow-y: auto; position: relative; }
+        .screen-container { display: none; height: 100%; }
+        .screen-container.active { display: block; }
+        .btn { background: #4A90E2; color: white; border: none; padding: 16px 24px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin: 10px 0; }
+        .btn:hover { background: #357ABD; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .back-btn { position: absolute; top: 20px; left: 20px; background: none; border: none; font-size: 18px; cursor: pointer; z-index: 10; }
+        .progress { position: absolute; top: 20px; right: 20px; font-size: 14px; color: #666; }
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { text-align: center; cursor: pointer; padding: 8px; }
+        .nav-item.active { color: #4A90E2; }
+        .splash-screen { background: linear-gradient(135deg, #4A90E2, #357ABD); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; }
+        .logo { font-size: 48px; font-weight: bold; margin-bottom: 40px; }
+        .onboarding-content { padding: 40px 30px; text-align: center; }
+        .question-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .question-subtitle { font-size: 16px; color: #666; margin-bottom: 40px; }
+        .option-btn { background: #f8f8f8; color: #333; border: 1px solid #ddd; margin: 8px 0; }
+        .option-btn.selected { background: #4A90E2; color: white; }
+        .home-header { padding: 30px 20px 20px; background: linear-gradient(135deg, #4A90E2, #357ABD); color: white; }
+        .greeting { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .feature-card { background: white; margin: 10px 20px; padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .feature-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .feature-subtitle { font-size: 14px; color: #666; }
+        .quiz-container { padding: 20px; }
+        .quiz-question { font-size: 20px; font-weight: bold; margin-bottom: 30px; text-align: center; }
+        .quiz-options { margin: 20px 0; }
+        .chatbot-container { padding: 20px; background: #f8f9fa; height: 100%; }
+        .chat-header { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+        .chat-message { background: white; padding: 15px; border-radius: 12px; margin: 10px 0; }
+        .insights-header { padding: 20px; background: white; border-bottom: 1px solid #eee; }
+        .article-card { background: white; margin: 10px 20px; padding: 20px; border-radius: 12px; border: 1px solid #eee; }
+        .calendar-container { padding: 20px; }
+        .goal-card { background: #f0f8ff; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <div class="status-bar">
+                <span>19:02</span>
+                <span>●●● ⚡ 🔋</span>
+            </div>
+            <div class="content" id="content">
+                <!-- Screens will be loaded here -->
+            </div>
+            <div class="bottom-nav" id="bottomNav" style="display: none;">
+                <div class="nav-item" onclick="showScreen('home')">🏠<br>홈</div>
+                <div class="nav-item" onclick="showScreen('insights')">💡<br>인사이트</div>
+                <div class="nav-item" onclick="showScreen('archive')">📚<br>아카이브</div>
+                <div class="nav-item" onclick="showScreen('calendar')">📅<br>캘린더</div>
+                <div class="nav-item" onclick="showScreen('profile')">👤<br>마이</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 'splash';
+        let onboardingStep = 0;
+        let quizStep = 0;
+        
+        const screens = {
+            splash: () => `
+                <div class="splash-screen">
+                    <div class="logo">LOGO</div>
+                    <div style="position: absolute; bottom: 100px; width: 100%; padding: 0 40px;">
+                        <button class="btn" onclick="showScreen('login')">시작하기</button>
+                    </div>
+                </div>
+            `,
+            
+            login: () => `
+                <div style="padding: 60px 30px; text-align: center;">
+                    <div class="logo" style="color: #333; margin-bottom: 60px;">LOGO</div>
+                    <input type="text" placeholder="아이디 입력" style="width: 100%; padding: 16px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px;">
+                    <input type="password" placeholder="비밀번호 입력" style="width: 100%; padding: 16px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px;">
+                    <button class="btn" onclick="showScreen('start')" style="margin-top: 20px;">로그인</button>
+                    <div style="margin: 20px 0; color: #666;">아이디 찾기 | 비밀번호 찾기 | 회원가입</div>
+                    <div style="margin-top: 60px; color: #666;">SNS계정으로 로그인하기</div>
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #FEE500; display: flex; align-items: center; justify-content: center;">K</div>
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #03C75A; display: flex; align-items: center; justify-content: center; color: white;">N</div>
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #000; display: flex; align-items: center; justify-content: center; color: white;">🍎</div>
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #4285F4; display: flex; align-items: center; justify-content: center; color: white;">G</div>
+                    </div>
+                </div>
+            `,
+            
+            start: () => `
+                <div class="onboarding-content">
+                    <h2>하루 10분 투자<br>평생 함께할 금융 메이트</h2>
+                    <p style="color: #666; margin: 20px 0;">제테크 시작 전 메이트 찾기 텍스트는 이렇게 두 줄로 사용할 예정입니다. 최대 두줄 여기까지 최대 두줄 여기까지</p>
+                    <div style="height: 200px; background: #f0f0f0; border-radius: 12px; margin: 40px 0;"></div>
+                    <div style="text-align: center; margin: 20px 0;">● ○ ○</div>
+                    <button class="btn" onclick="showScreen('onboarding')">시작하기</button>
+                </div>
+            `
+        };
+        
+        function showScreen(screenName, step = 0) {
+            currentScreen = screenName;
+            const content = document.getElementById('content');
+            const bottomNav = document.getElementById('bottomNav');
+            
+            if (['home', 'insights', 'archive', 'calendar', 'profile'].includes(screenName)) {
+                bottomNav.style.display = 'flex';
+                content.style.paddingBottom = '80px';
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                event?.target.classList.add('active');
+            } else {
+                bottomNav.style.display = 'none';
+                content.style.paddingBottom = '0';
+            }
+            
+            if (screenName === 'onboarding') {
+                content.innerHTML = getOnboardingScreen(step);
+            } else if (screenName === 'home') {
+                content.innerHTML = getHomeScreen();
+            } else if (screenName === 'quiz') {
+                content.innerHTML = getQuizScreen(step);
+            } else if (screenName === 'chatbot') {
+                content.innerHTML = getChatbotScreen();
+            } else if (screenName === 'insights') {
+                content.innerHTML = getInsightsScreen();
+            } else if (screenName === 'calendar') {
+                content.innerHTML = getCalendarScreen();
+            } else if (screenName === 'archive') {
+                content.innerHTML = getArchiveScreen();
+            } else if (screens[screenName]) {
+                content.innerHTML = screens[screenName]();
+            }
+        }
+        
+        // Initialize app
+        showScreen('splash');
+    </script>
+    <script src="prototype_screens.js"></script>
+</body>
+</html>
